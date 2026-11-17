@@ -1,86 +1,90 @@
 # PaperLess Campus
 
-Aplikasi web administrasi digital untuk satu unit layanan kampus. Cakupan: Surat Keterangan Aktif Kuliah, Surat Izin Kegiatan, dan Peminjaman Fasilitas. UI berbahasa Indonesia; autentikasi, role, pengajuan, approval, timeline, arsip, konfigurasi, serta metrik transaksi memakai Laravel dan database.
+PaperLess Campus adalah aplikasi administrasi digital untuk unit layanan kampus. Aplikasi ini mendukung pengajuan surat keterangan aktif kuliah, izin kegiatan, dan peminjaman fasilitas. Antarmuka menggunakan Bahasa Indonesia.
 
-## Status teknis
+## Fitur
 
-- Framework terpasang: Laravel 13.42.0; PHP CLI lokal: 8.3.30. Versi Laravel dipertahankan sesuai project.
-- Antarmuka memakai Blade SSR dengan CSS/JavaScript vanilla dan file statis ringan di `public/`.
-- `.env` lokal saat diaudit memakai SQLite. Migration baru aditif; database tidak di-reset.
-- Dokumen final dibuat satu kali sebagai PDF satu halaman oleh generator internal tanpa dependency eksternal. Dokumen tersebut untuk simulasi administrasi dan bukan tanda tangan elektronik tersertifikasi.
-- Nilai CO₂e adalah estimasi counterfactual/proyeksi, bukan pembacaan listrik server atau hasil audit.
+- Autentikasi berbasis sesi dan akses sesuai peran: Pengaju, Verifikator, dan Admin.
+- Pembuatan, pengiriman, pelacakan, revisi, dan verifikasi pengajuan.
+- Persetujuan satu hingga tiga tahap, dengan catatan untuk revisi atau penolakan.
+- Lampiran PDF privat dengan batas ukuran 2 MB.
+- Pembuatan PDF internal setelah seluruh tahap persetujuan selesai, serta arsip dengan akses terotorisasi.
+- Pengelolaan pengguna, konfigurasi layanan, baseline, dan faktor emisi.
+- Dashboard dampak yang memisahkan transaksi selesai dari proyeksi tahunan.
 
-## Menjalankan dengan Laragon (Windows)
+## Teknologi dan status
 
-1. Jalankan Apache dan MySQL hanya bila memilih MySQL. Pastikan PHP Laragon 8.3+ aktif di PATH.
-2. Dari terminal project: `composer install` (vendor saat ini sudah ada). Salin `.env.example` ke `.env` bila belum mempunyai `.env`; jangan menimpa file `.env` yang berisi konfigurasi lokal.
-3. Untuk SQLite: pastikan `DB_CONNECTION=sqlite` dan `database/database.sqlite` ada. Project lokal saat ini sudah memakai file tersebut.
-4. Untuk MySQL Laragon: buat database `paperless_campus` lewat HeidiSQL/phpMyAdmin, lalu isi `DB_CONNECTION=mysql`, host/port/database/user/password sesuai konfigurasi lokal Anda.
-5. Jalankan migration tanpa reset: `php artisan migrate`.
-6. Isi data demo lokal (idempoten): `php artisan db:seed`. Seed akun demo dan submission hanya bila tabel submission belum berisi data.
-7. Buka Laragon Auto Virtual Host jika domain lokal sudah dibuat, atau jalankan `php artisan serve` lalu buka `http://127.0.0.1:8000`.
+- Laravel 13.42.0 dan PHP 8.3.30 pada lingkungan pengembangan yang diaudit.
+- Blade server-side, CSS dan JavaScript ringan, serta aset statis di `public/`.
+- Database lokal saat ini menggunakan SQLite pada `database/database.sqlite`.
+- PDF final dibuat oleh generator internal satu halaman. Dokumen ini untuk simulasi dan bukan dokumen resmi atau tanda tangan elektronik tersertifikasi.
+- Nilai CO2e adalah estimasi berdasarkan faktor dan asumsi yang tercatat. Bukan pengukuran listrik server atau audit karbon. Proyeksi 3.000 pengajuan per tahun ditampilkan terpisah dari transaksi database.
 
-Jika Anda mengubah `APP_KEY`/konfigurasi, gunakan `php artisan config:clear`. Jangan bagikan `.env` atau gunakan password demo di produksi.
+## Menjalankan di Laragon
+
+Pastikan PHP Laragon dan Composer tersedia di terminal. Dari folder project:
+
+```powershell
+composer install
+php artisan migrate
+php artisan db:seed
+php artisan serve
+```
+
+Buka `http://127.0.0.1:8000`. Project lokal menggunakan SQLite, sehingga tidak perlu membuat database MySQL untuk mencoba aplikasi.
+
+Jika file `.env` belum ada, salin `.env.example` menjadi `.env`, lalu atur `APP_KEY` dan koneksi database sesuai kebutuhan. Jangan menimpa `.env` yang sudah berisi konfigurasi lokal. Untuk MySQL Laragon, buat database terlebih dahulu melalui HeidiSQL atau phpMyAdmin, lalu sesuaikan `DB_CONNECTION`, host, port, nama database, dan kredensial di `.env`.
+
+Migration aplikasi bersifat aditif. Gunakan `php artisan migrate` untuk menerapkannya. Jangan gunakan `migrate:fresh` pada database yang berisi data. Seeder demo bersifat idempoten dan tidak membuat ulang contoh pengajuan jika sudah ada pengajuan.
 
 ## Akun demo lokal
 
-Seeder membuat:
-
 | Peran | Email | Kata sandi |
-|---|---|---|
-| Pengaju | `pengaju@paperless.test` | `Perbaiki error Laravel pada project PaperLess Campus.
-
-Saat membuka `http://127.0.0.1:8000/pengajuan/4` setelah mengunggah dokumen PDF, muncul:
-
-**ParseError: syntax error, unexpected token "endforeach", expecting end of file**
-
-Lokasi: `resources/views/submissions/show.blade.php`, sekitar baris 5.
-
-Tugas:
-1. Baca seluruh isi `show.blade.php`.
-2. Periksa semua pasangan directive Blade, termasuk `@foreach/@endforeach`, `@forelse/@empty/@endforelse`, `@if/@endif`, dan directive lainnya.
-3. Perbaiki kesalahan syntax yang menyebabkan ParseError.
-4. Rapikan HTML dan Blade menjadi beberapa baris dengan indentasi yang konsisten agar mudah diperiksa.
-5. Pertahankan seluruh tampilan, informasi, dan fungsionalitas halaman detail pengajuan.
-6. Pastikan lampiran PDF dapat ditampilkan sebagai tautan atau diunduh sesuai hak akses pengguna.
-7. Jalankan `php artisan view:clear`, `php artisan view:cache`, dan `php artisan test`.
-8. Periksa apakah ada kesalahan Blade serupa pada halaman lain.
-
-Jangan membuat ulang project, jangan menghapus data database, dan jangan melakukan `migrate:fresh`.
-
-Implementasikan perbaikannya langsung, lalu laporkan file yang diubah dan hasil pengujian.` |
+| --- | --- | --- |
+| Pengaju | `pengaju@paperless.test` | `DemoPaperless!2026` |
 | Verifikator | `verifikator@paperless.test` | `DemoPaperless!2026` |
 | Admin unit | `admin@paperless.test` | `DemoPaperless!2026` |
 
-Akun ini hanya untuk demo lokal. Tidak ada pemilih role mandiri di layar login; role berasal dari rekaman user.
+Akun tersebut hanya untuk demo lokal. Peran ditentukan oleh akun di database; pengguna tidak dapat memilih peran sendiri pada halaman login. Jangan gunakan kata sandi demo di lingkungan produksi.
 
-## Cara demo singkat
+## Alur demo
 
-1. Login Pengaju, buat pengajuan salah satu dari tiga layanan, simpan draf atau kirim.
-2. Logout, login Verifikator, cari antrean dan setujui tahap atau minta revisi dengan catatan.
-3. Login kembali Pengaju untuk melihat timeline/revisi. Untuk menguji dua tahap, ubah konfigurasi layanan event sebagai Admin menjadi 2 tahap.
-4. Setelah semua tahap disetujui, cek Arsip Digital dan unduh keluaran internal privat. PDF privat simulasi, bukan dokumen bertanda tangan tersertifikasi.
-5. Lihat Dashboard Dampak dan Metodologi; transaksi selesai dipisahkan dari panel proyeksi 3.000 pengajuan/tahun.
+1. Masuk sebagai Pengaju, buat pengajuan, lalu simpan sebagai draf atau kirim untuk verifikasi.
+2. Masuk sebagai Verifikator untuk memeriksa pengajuan. Admin dapat mengubah jumlah tahap persetujuan pada konfigurasi layanan.
+3. Untuk revisi, verifikator menambahkan catatan. Pengaju dapat memperbaiki dan mengirim kembali pengajuan.
+4. Setelah seluruh tahap disetujui, detail pengajuan menampilkan status selesai dan tautan ke PDF internal pada arsip digital.
+5. Buka Dashboard Dampak dan Metodologi untuk melihat asumsi, faktor, transaksi selesai, dan proyeksi tahunan.
 
-## Perintah QA
+## Aset frontend
+
+Aplikasi menyajikan `public/paperless.css` dan `public/paperless.js`, jadi dapat dijalankan tanpa build frontend. Jika ingin menjalankan build Vite:
+
+```powershell
+npm install
+npm run build
+```
+
+Preferensi tema disimpan pada browser. Data pengajuan dan proses bisnis disimpan melalui Laravel dan database.
+
+## Pemeriksaan
 
 ```powershell
 php artisan test
 php artisan route:list
 php artisan migrate:status
+php artisan view:clear
 php artisan view:cache
 ```
 
-Vite build memerlukan `npm install` lebih dahulu. Halaman Laravel memakai aset statis yang sudah disediakan di `public/paperless.css` dan `public/paperless.js`, jadi dapat dibuka tanpa build. Jangan jalankan `migrate:fresh` pada database berisi data.
+Feature tests menggunakan SQLite in-memory dan tidak mengubah database lokal di `.env`. Pengukuran Lighthouse, Web Vitals, ukuran transfer, dan pengujian konkurensi pada MySQL perlu dilakukan terpisah; hasilnya tidak diklaim di sini.
 
-Queue lokal dapat memakai `QUEUE_CONNECTION=sync`; jika menggunakan queue database, jalankan `php artisan queue:work`. Aplikasi saat ini menyelesaikan workflow sinkron dan tidak membutuhkan worker.
+Workflow aplikasi berjalan sinkron dan tidak memerlukan queue worker untuk demo lokal. Jika konfigurasi queue diubah, ikuti driver yang dipilih pada `.env`.
 
 ## Dokumentasi teknis
 
 - [Arsitektur](docs/ARCHITECTURE.md)
-- [Metodologi CO₂e](docs/CO2_METHOD.md)
-- [Bukti GSE](docs/GSE_EVIDENCE.md)
-- [Testing](docs/TESTING.md)
+- [Metodologi CO2e](docs/CO2_METHOD.md)
+- [Bukti Green Software Engineering](docs/GSE_EVIDENCE.md)
+- [Rencana dan hasil pengujian](docs/TESTING.md)
 - [Rencana pengukuran performa](docs/PERFORMANCE_TEST_PLAN.md)
-- [Alignment laporan](docs/REPORT_ALIGNMENT.md)
-
+- [Penyesuaian laporan proyek](docs/REPORT_ALIGNMENT.md)
