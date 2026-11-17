@@ -31,9 +31,9 @@ class DatabaseSeeder extends Seeder
         foreach ($types as $type) DocumentType::query()->firstOrCreate(['code' => $type['code']], $type);
 
         $factors = [
-            ['code'=>'paper_mass_g','value'=>4.99,'unit'=>'g/lembar','source'=>'Kertas A4 80 gsm · asumsi laporan','source_year'=>2024,'description'=>'Massa selembar kertas A4 80 gsm.'],
+            ['code'=>'paper_mass_g','value'=>4.99,'unit'=>'g/lembar','source'=>'Kertas A4 80 gsm - asumsi laporan','source_year'=>2024,'description'=>'Massa selembar kertas A4 80 gsm.'],
             ['code'=>'paper_kg_co2e_per_kg','value'=>1.33932,'unit'=>'kgCO2e/kg kertas','source'=>'DESNZ conversion factors','source_year'=>2024,'description'=>'Faktor produksi kertas; cakupan perlu dikonfirmasi.'],
-            ['code'=>'grid_kg_co2e_per_kwh','value'=>0.87,'unit'=>'kgCO2/kWh','source'=>'ESDM faktor grid Jamali · proxy laporan','source_year'=>2019,'description'=>'Proxy model; bukan lokasi perangkat/server terukur.'],
+            ['code'=>'grid_kg_co2e_per_kwh','value'=>0.87,'unit'=>'kgCO2/kWh','source'=>'ESDM faktor grid Jamali - proxy laporan','source_year'=>2019,'description'=>'Proxy model; bukan lokasi perangkat/server terukur.'],
             ['code'=>'motor_kg_co2_per_litre','value'=>2.2565,'unit'=>'kgCO2/L','source'=>'Faktor laporan kelompok','source_year'=>2024,'description'=>'Faktor bahan bakar motor asumsi.'],
             ['code'=>'paper_cost_per_sheet','value'=>110,'unit'=>'IDR/lembar','source'=>'Asumsi biaya laporan','source_year'=>2026,'description'=>'Harga kertas simulasi.'],
             ['code'=>'printing_cost_per_page','value'=>200,'unit'=>'IDR/halaman','source'=>'Asumsi biaya laporan','source_year'=>2026,'description'=>'Biaya toner dan perawatan simulasi.'],
@@ -44,8 +44,8 @@ class DatabaseSeeder extends Seeder
             ['code'=>'residual_share','value'=>0.10,'unit'=>'fraksi','source'=>'Asumsi laporan kelompok','source_year'=>2026,'description'=>'Porsi proses fisik yang masih tersisa.'],
             ['code'=>'page_mb','value'=>0.35,'unit'=>'MB/kunjungan','source'=>'Target awal, belum diukur','source_year'=>2026,'description'=>'Transfer halaman target, bukan hasil pengukuran.'],
             ['code'=>'pdf_mb','value'=>0.15,'unit'=>'MB/dokumen','source'=>'Asumsi target, belum diukur','source_year'=>2026,'description'=>'Ukuran dokumen PDF target.'],
-            ['code'=>'operational_kwh_per_gb','value'=>0.194,'unit'=>'kWh/GB','source'=>'SWDM v4 · faktor laporan','source_year'=>2024,'description'=>'Intensitas energi operasional asumsi.'],
-            ['code'=>'embodied_kwh_per_gb','value'=>0.106,'unit'=>'kWh/GB','source'=>'SWDM v4 · faktor laporan','source_year'=>2024,'description'=>'Intensitas energi embodied asumsi.'],
+            ['code'=>'operational_kwh_per_gb','value'=>0.194,'unit'=>'kWh/GB','source'=>'SWDM v4 - faktor laporan','source_year'=>2024,'description'=>'Intensitas energi operasional asumsi.'],
+            ['code'=>'embodied_kwh_per_gb','value'=>0.106,'unit'=>'kWh/GB','source'=>'SWDM v4 - faktor laporan','source_year'=>2024,'description'=>'Intensitas energi embodied asumsi.'],
             ['code'=>'global_embodied_kg_co2e_per_kwh','value'=>0.494,'unit'=>'kgCO2e/kWh','source'=>'Faktor laporan kelompok','source_year'=>2024,'description'=>'Faktor emisi embodied global asumsi.'],
         ];
         foreach ($factors as $factor) EmissionFactor::query()->firstOrCreate(['code' => $factor['code']], $factor);

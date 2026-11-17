@@ -32,16 +32,16 @@ class AppServiceProvider extends ServiceProvider
         view()->composer('layouts.app', function (ViewContract $view): void {
             $user = auth()->user();
             $all = [
-                'dashboard' => ['label' => 'Ringkasan', 'short' => 'Home', 'icon' => 'H', 'route' => 'dashboard'],
-                'submissions.index' => ['label' => 'Riwayat Pengajuan', 'short' => 'Riwayat', 'icon' => '=', 'route' => 'submissions.index'],
-                'archive.index' => ['label' => 'Arsip Digital', 'short' => 'Arsip', 'icon' => '[]', 'route' => 'archive.index'],
-                'impact.index' => ['label' => 'Dampak Lingkungan', 'short' => 'Dampak', 'icon' => '*', 'route' => 'impact.index'],
-                'impact.methodology' => ['label' => 'Metodologi', 'short' => 'Metode', 'icon' => 'i', 'route' => 'impact.methodology'],
-                'profile.edit' => ['label' => 'Profil & Pengaturan', 'short' => 'Profil', 'icon' => 'o', 'route' => 'profile.edit'],
+                'dashboard' => ['label' => 'Ringkasan', 'short' => 'Home', 'icon' => 'home', 'route' => 'dashboard'],
+                'submissions.index' => ['label' => 'Riwayat Pengajuan', 'short' => 'Riwayat', 'icon' => 'list', 'route' => 'submissions.index'],
+                'archive.index' => ['label' => 'Arsip Digital', 'short' => 'Arsip', 'icon' => 'archive', 'route' => 'archive.index'],
+                'impact.index' => ['label' => 'Dampak Lingkungan', 'short' => 'Dampak', 'icon' => 'leaf', 'route' => 'impact.index'],
+                'impact.methodology' => ['label' => 'Metodologi', 'short' => 'Metode', 'icon' => 'info', 'route' => 'impact.methodology'],
+                'profile.edit' => ['label' => 'Profil & Pengaturan', 'short' => 'Profil', 'icon' => 'user', 'route' => 'profile.edit'],
             ];
-            if ($user?->isRole('pengaju')) $all['submissions.create'] = ['label' => 'Buat Pengajuan', 'short' => 'Buat', 'icon' => '+', 'route' => 'submissions.create'];
-            if ($user?->isRole('verifikator')) $all['reviews.index'] = ['label' => 'Antrean Verifikasi', 'short' => 'Antrean', 'icon' => 'v', 'route' => 'reviews.index', 'count' => Submission::query()->whereIn('status', ['submitted', 'in_review'])->count()];
-            if ($user?->isRole('admin')) foreach (['admin.users' => ['Manajemen Pengguna', 'Pengguna', 'U'], 'admin.services' => ['Konfigurasi Layanan', 'Layanan', '[]'], 'admin.factors' => ['Faktor Emisi', 'Faktor', '~']] as $route => [$label, $short, $icon]) $all[$route] = ['label' => $label, 'short' => $short, 'icon' => $icon, 'route' => $route];
+            if ($user?->isRole('pengaju')) $all['submissions.create'] = ['label' => 'Buat Pengajuan', 'short' => 'Buat', 'icon' => 'plus', 'route' => 'submissions.create'];
+            if ($user?->isRole('verifikator')) $all['reviews.index'] = ['label' => 'Antrean Verifikasi', 'short' => 'Antrean', 'icon' => 'check', 'route' => 'reviews.index', 'count' => Submission::query()->whereIn('status', ['submitted', 'in_review'])->count()];
+            if ($user?->isRole('admin')) foreach (['admin.users' => ['Manajemen Pengguna', 'Pengguna', 'users'], 'admin.services' => ['Konfigurasi Layanan', 'Layanan', 'settings'], 'admin.factors' => ['Faktor Emisi', 'Faktor', 'flask']] as $route => [$label, $short, $icon]) $all[$route] = ['label' => $label, 'short' => $short, 'icon' => $icon, 'route' => $route];
             $items = collect($all)->map(fn (array $item) => [...$item, 'url' => route($item['route'])])->values();
             $view->with('navItems', $items);
         });

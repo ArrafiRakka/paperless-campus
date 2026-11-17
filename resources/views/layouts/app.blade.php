@@ -13,13 +13,13 @@
     @include('partials.sidebar')
     <div class="mobile-scrim" id="scrim"></div>
     <main class="main-area">
-        <header class="topbar"><button class="icon-button menu-button" id="menuButton" aria-label="Buka navigasi">Menu</button><div class="crumb"><span>PaperLess Campus</span><b>/</b><strong>@yield('title', 'Ringkasan')</strong></div><div class="top-actions"><span class="demo-chip"><i></i> {{ config('app.env') === 'production' ? 'Layanan kampus' : 'Lingkungan demo' }}</span><span class="avatar avatar-small">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span><span class="top-user-name">{{ auth()->user()->name }}</span><form method="post" action="{{ route('logout') }}">@csrf<button class="button button-quiet button-small">Keluar</button></form></div></header>
+        <header class="topbar"><button class="icon-button menu-button" id="menuButton" aria-label="Buka navigasi"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div class="crumb"><span>PaperLess Campus</span><b>/</b><strong>@yield('title', 'Ringkasan')</strong></div><div class="top-actions"><span class="demo-chip"><i></i> {{ config('app.env') === 'production' ? 'Layanan kampus' : 'Lingkungan demo' }}</span><span class="avatar avatar-small">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span><span class="top-user-name">{{ auth()->user()->name }}</span><form method="post" action="{{ route('logout') }}">@csrf<button class="button button-quiet button-small">Keluar</button></form></div></header>
         <div class="page-content">
             @if(session('success'))<div class="flash flash-success" role="status">{{ session('success') }}</div>@endif
             @if($errors->any())<div class="flash flash-error" role="alert">Periksa kembali data yang dimasukkan. {{ $errors->first() }}</div>@endif
             @yield('content')
         </div>
     </main>
-    <nav class="mobile-nav">@foreach($navItems as $item)<a href="{{ $item['url'] }}" class="{{ request()->url() === $item['url'] ? 'active' : '' }}"><span>{{ $item['icon'] }}</span><span>{{ $item['short'] }}</span></a>@endforeach</nav>
+    <nav class="mobile-nav">@foreach($navItems as $item)<a href="{{ $item['url'] }}" class="{{ request()->url() === $item['url'] ? 'active' : '' }}"><span>@include('partials.nav-icon',['name'=>$item['icon']])</span><span>{{ $item['short'] }}</span></a>@endforeach</nav>
 </div>
 </body></html>

@@ -10,6 +10,7 @@ use App\Services\SubmissionWorkflow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class PaperlessWorkflowTest extends TestCase
@@ -45,6 +46,22 @@ class PaperlessWorkflowTest extends TestCase
         $this->actingAs($user)->put('/profil', ['name' => 'Pengaju Diperbarui', 'current_password' => 'salah', 'password' => 'PasswordBaru!2026', 'password_confirmation' => 'PasswordBaru!2026'])->assertSessionHasErrors('current_password');
         $this->actingAs($user)->put('/profil', ['name' => 'Pengaju Diperbarui', 'current_password' => 'DemoPaperless!2026', 'password' => 'PasswordBaru!2026', 'password_confirmation' => 'PasswordBaru!2026'])->assertRedirect();
         $this->assertTrue(auth()->validate(['email' => $user->email, 'password' => 'PasswordBaru!2026']));
+    }
+
+    public function test_impact_dashboard_is_cached_and_invalidates_after_baseline_change(): void
+    {
+        Cache::flush();
+        $savings = app(\App\Services\SavingsService::class);
+        $first = $savings->dashboard();
+        $this->assertSame(1, $first['documents']);
+        $this->assertCount(3, $first['by_type']);
+        $this->assertCount(6, $first['trend']);
+        $this->assertTrue(Cache::has('paperless.impact.unit'));
+
+        DocumentType::where('code', 'active')->update(['estimated_sheets' => 7]);
+        $this->assertSame($first['sheets'], $savings->dashboard()['sheets']);
+        $savings->forget();
+        $this->assertSame($first['sheets'] + 4, $savings->dashboard()['sheets']);
     }
 
     public function test_landing_login_and_role_pages_render_successfully(): void
@@ -139,5 +156,19 @@ class PaperlessWorkflowTest extends TestCase
         $this->assertDatabaseHas('submissions',['id'=>$submission->id,'status'=>'submitted']);
         $this->actingAs($reviewer)->post(route('reviews.decide',[$submission,'approved']))->assertRedirect();
         $this->assertDatabaseHas('submissions',['id'=>$submission->id,'status'=>'completed']);
+    }
+
+    public function test_reviewer_can_reject_with_a_note_and_no_archive_pdf_is_created(): void
+    {
+        Storage::fake('local');
+        $student = $this->user();
+        $reviewer = $this->user('verifikator');
+        $type = DocumentType::where('code', 'active')->firstOrFail();
+        $submission = app(SubmissionWorkflow::class)->create($student, $type->id, ['purpose' => 'Demo'], true);
+
+        $this->actingAs($reviewer)->post(route('reviews.decide', [$submission, 'rejected']), ['note' => 'Dokumen tidak memenuhi ketentuan'])->assertRedirect();
+        $this->assertDatabaseHas('submissions', ['id' => $submission->id, 'status' => 'rejected']);
+        $this->assertDatabaseHas('approval_actions', ['submission_id' => $submission->id, 'action' => 'rejected', 'note' => 'Dokumen tidak memenuhi ketentuan']);
+        $this->assertDatabaseMissing('generated_documents', ['submission_id' => $submission->id]);
     }
 }
