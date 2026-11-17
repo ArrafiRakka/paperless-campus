@@ -28,7 +28,27 @@ Seeder membuat:
 
 | Peran | Email | Kata sandi |
 |---|---|---|
-| Pengaju | `pengaju@paperless.test` | `DemoPaperless!2026` |
+| Pengaju | `pengaju@paperless.test` | `Perbaiki error Laravel pada project PaperLess Campus.
+
+Saat membuka `http://127.0.0.1:8000/pengajuan/4` setelah mengunggah dokumen PDF, muncul:
+
+**ParseError: syntax error, unexpected token "endforeach", expecting end of file**
+
+Lokasi: `resources/views/submissions/show.blade.php`, sekitar baris 5.
+
+Tugas:
+1. Baca seluruh isi `show.blade.php`.
+2. Periksa semua pasangan directive Blade, termasuk `@foreach/@endforeach`, `@forelse/@empty/@endforelse`, `@if/@endif`, dan directive lainnya.
+3. Perbaiki kesalahan syntax yang menyebabkan ParseError.
+4. Rapikan HTML dan Blade menjadi beberapa baris dengan indentasi yang konsisten agar mudah diperiksa.
+5. Pertahankan seluruh tampilan, informasi, dan fungsionalitas halaman detail pengajuan.
+6. Pastikan lampiran PDF dapat ditampilkan sebagai tautan atau diunduh sesuai hak akses pengguna.
+7. Jalankan `php artisan view:clear`, `php artisan view:cache`, dan `php artisan test`.
+8. Periksa apakah ada kesalahan Blade serupa pada halaman lain.
+
+Jangan membuat ulang project, jangan menghapus data database, dan jangan melakukan `migrate:fresh`.
+
+Implementasikan perbaikannya langsung, lalu laporkan file yang diubah dan hasil pengujian.` |
 | Verifikator | `verifikator@paperless.test` | `DemoPaperless!2026` |
 | Admin unit | `admin@paperless.test` | `DemoPaperless!2026` |
 

@@ -21,7 +21,7 @@ class ReviewController extends Controller
 
     public function show(Submission $submission): View
     {
-        Gate::authorize('decide', $submission);
+        Gate::authorize('view', $submission);
 
         return view('reviews.show', ['submission' => $submission->load(['user', 'documentType', 'attachments', 'approvals.verifier', 'events.actor'])]);
     }
@@ -30,8 +30,11 @@ class ReviewController extends Controller
     {
         abort_unless(in_array($action, ['approved', 'revision_requested', 'rejected'], true), 404);
         Gate::authorize('decide', $submission);
-        $validated = $request->validate(['note' => [$action === 'approved' ? 'nullable' : 'required', 'string', 'max:2000']]);
-        $workflow->decide($submission, $request->user(), $action, $validated['note'] ?? null);
+        $validated = $request->validate([
+            'step_number' => ['required', 'integer', 'min:1'],
+            'note' => [$action === 'approved' ? 'nullable' : 'required', 'string', 'max:2000'],
+        ]);
+        $workflow->decide($submission, $request->user(), $action, $validated['note'] ?? null, (int) $validated['step_number']);
 
         return redirect()->route('reviews.show', $submission)->with('success', match ($action) { 'approved' => 'Persetujuan tahap berhasil dicatat.', 'revision_requested' => 'Permintaan revisi berhasil dikirim.', default => 'Penolakan berhasil dicatat.' });
     }

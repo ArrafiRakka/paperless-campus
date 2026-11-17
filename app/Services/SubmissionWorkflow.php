@@ -61,15 +61,17 @@ class SubmissionWorkflow
         });
     }
 
-    public function decide(Submission $submission, User $verifier, string $action, ?string $note): void
+    public function decide(Submission $submission, User $verifier, string $action, ?string $note, int $expectedStep): void
     {
         abort_unless(in_array($action, ['approved', 'revision_requested', 'rejected'], true), 422);
         if ($action !== 'approved') abort_unless(filled($note), 422, 'Catatan wajib diisi.');
 
-        DB::transaction(function () use ($submission, $verifier, $action, $note): void {
+        DB::transaction(function () use ($submission, $verifier, $action, $note, $expectedStep): void {
             $locked = Submission::query()->with('documentType')->lockForUpdate()->findOrFail($submission->id);
+            abort_unless($verifier->is_active && $verifier->isRole('verifikator') && $locked->user_id !== $verifier->id, 403);
             abort_unless(in_array($locked->status, ['submitted', 'in_review'], true), 409, 'Status pengajuan telah berubah.');
             $step = $locked->current_step;
+            abort_unless($step === $expectedStep, 409, 'Tahap pengajuan berubah. Muat ulang halaman sebelum memberi keputusan.');
             $lastAtStep = $locked->approvals()->where('step_number', $step)->latest('acted_at')->first();
             abort_if($lastAtStep && $lastAtStep->action !== 'revision_requested', 409, 'Tahap ini sudah diputuskan.');
             ApprovalAction::create(['submission_id' => $locked->id, 'verifier_id' => $verifier->id, 'step_number' => $step, 'action' => $action, 'note' => $note, 'acted_at' => now()]);

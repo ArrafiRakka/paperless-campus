@@ -114,6 +114,7 @@ class PaperlessWorkflowTest extends TestCase
         $submission=Submission::where('user_id',$owner->id)->firstOrFail();
         $attachment=$submission->attachments()->firstOrFail();
         Storage::disk('local')->assertExists($attachment->path);
+        $this->actingAs($owner)->get(route('submissions.show',$submission))->assertOk()->assertSee('lampiran.pdf')->assertSee(route('submissions.attachment',[$submission,$attachment->id]));
         $this->actingAs($other)->get(route('submissions.show',$submission))->assertForbidden();
         $this->actingAs($other)->get(route('submissions.attachment',[$submission,$attachment->id]))->assertForbidden();
         $payload['attachment']=UploadedFile::fake()->create('lampiran.txt',5,'text/plain');
@@ -128,17 +129,22 @@ class PaperlessWorkflowTest extends TestCase
         $student=$this->user('pengaju'); $verifier=$this->user('verifikator');
         $type=DocumentType::where('code','event')->firstOrFail();
         $submission=app(SubmissionWorkflow::class)->create($student,$type->id,['purpose'=>'Demo'],true);
-        $this->actingAs($verifier)->post(route('reviews.decide',[$submission,'approved']))->assertRedirect();
+        $this->actingAs($verifier)->post(route('reviews.decide',[$submission,'approved']), ['step_number' => 1])->assertRedirect(route('reviews.show', $submission));
         $submission->refresh();
         $this->assertSame('in_review',$submission->status);
         $this->assertSame(2,$submission->current_step);
-        $this->actingAs($verifier)->post(route('reviews.decide',[$submission,'approved']))->assertRedirect();
+        $this->actingAs($verifier)->get(route('reviews.show', $submission))->assertOk()->assertSee('Dalam pemeriksaan')->assertSee('Setujui tahap');
+        $this->actingAs($verifier)->post(route('reviews.decide',[$submission,'approved']), ['step_number' => 1])->assertStatus(409);
+        $this->actingAs($verifier)->post(route('reviews.decide',[$submission,'approved']), ['step_number' => 2])->assertRedirect(route('reviews.show', $submission));
         $this->assertDatabaseHas('submissions',['id'=>$submission->id,'status'=>'completed']);
         $this->assertSame(2,GeneratedDocument::count());
         $doc=GeneratedDocument::where('submission_id',$submission->id)->firstOrFail();
         Storage::disk('local')->assertExists($doc->pdf_path);
         $this->assertStringEndsWith('.pdf',$doc->pdf_path);
         $this->assertStringStartsWith('%PDF-1.4',Storage::disk('local')->get($doc->pdf_path));
+        $this->actingAs($verifier)->get(route('reviews.show', $submission))->assertOk()->assertSee('Selesai')->assertSee('Mode baca saja')->assertDontSee('Setujui tahap');
+        $this->actingAs($verifier)->post(route('reviews.decide',[$submission,'approved']), ['step_number' => 2])->assertForbidden();
+        $this->assertSame(2, $submission->approvals()->count());
         $this->actingAs($student)->get(route('archive.download',$submission))->assertOk()->assertHeader('content-type','application/pdf');
         $this->actingAs($this->user())->get(route('archive.download',$submission))->assertForbidden();
     }
@@ -149,12 +155,13 @@ class PaperlessWorkflowTest extends TestCase
         $student=$this->user(); $reviewer=$this->user('verifikator');
         $type=DocumentType::where('code','active')->firstOrFail();
         $submission=app(SubmissionWorkflow::class)->create($student,$type->id,['purpose'=>'Demo'],true);
-        $this->actingAs($reviewer)->post(route('reviews.decide',[$submission,'revision_requested']),['note'=>''])->assertSessionHasErrors('note');
-        $this->actingAs($reviewer)->post(route('reviews.decide',[$submission,'revision_requested']),['note'=>'Mohon dilengkapi'])->assertRedirect();
+        $this->actingAs($reviewer)->post(route('reviews.decide',[$submission,'revision_requested']),['step_number'=>1,'note'=>''])->assertSessionHasErrors('note');
+        $this->actingAs($reviewer)->post(route('reviews.decide',[$submission,'revision_requested']),['step_number'=>1,'note'=>'Mohon dilengkapi'])->assertRedirect();
+        $this->actingAs($reviewer)->get(route('reviews.show', $submission))->assertOk()->assertSee('Menunggu revisi pengaju')->assertSee('Mode baca saja')->assertDontSee('Setujui tahap');
         $this->assertDatabaseHas('approval_actions',['submission_id'=>$submission->id,'action'=>'revision_requested','note'=>'Mohon dilengkapi']);
         $this->actingAs($student)->put(route('submissions.update',$submission),['purpose'=>'Sudah dilengkapi','full_name'=>'Sari','nim'=>'11','program'=>'SI','semester'=>2])->assertRedirect();
         $this->assertDatabaseHas('submissions',['id'=>$submission->id,'status'=>'submitted']);
-        $this->actingAs($reviewer)->post(route('reviews.decide',[$submission,'approved']))->assertRedirect();
+        $this->actingAs($reviewer)->post(route('reviews.decide',[$submission,'approved']), ['step_number' => 1])->assertRedirect();
         $this->assertDatabaseHas('submissions',['id'=>$submission->id,'status'=>'completed']);
     }
 
@@ -166,9 +173,27 @@ class PaperlessWorkflowTest extends TestCase
         $type = DocumentType::where('code', 'active')->firstOrFail();
         $submission = app(SubmissionWorkflow::class)->create($student, $type->id, ['purpose' => 'Demo'], true);
 
-        $this->actingAs($reviewer)->post(route('reviews.decide', [$submission, 'rejected']), ['note' => 'Dokumen tidak memenuhi ketentuan'])->assertRedirect();
+        $this->actingAs($reviewer)->post(route('reviews.decide', [$submission, 'rejected']), ['step_number' => 1, 'note' => 'Dokumen tidak memenuhi ketentuan'])->assertRedirect();
         $this->assertDatabaseHas('submissions', ['id' => $submission->id, 'status' => 'rejected']);
         $this->assertDatabaseHas('approval_actions', ['submission_id' => $submission->id, 'action' => 'rejected', 'note' => 'Dokumen tidak memenuhi ketentuan']);
         $this->assertDatabaseMissing('generated_documents', ['submission_id' => $submission->id]);
+        $this->actingAs($reviewer)->get(route('reviews.show', $submission))->assertOk()->assertSee('Ditolak')->assertSee('Mode baca saja')->assertDontSee('Setujui tahap');
+    }
+
+    public function test_review_access_is_role_and_ownership_protected(): void
+    {
+        $student = $this->user('pengaju');
+        $otherStudent = $this->user('pengaju');
+        $reviewer = $this->user('verifikator');
+        $type = DocumentType::where('code', 'active')->firstOrFail();
+        $submission = app(SubmissionWorkflow::class)->create($student, $type->id, ['purpose' => 'Demo'], true);
+
+        $this->actingAs($otherStudent)->get(route('reviews.show', $submission))->assertForbidden();
+        $this->actingAs($student)->post(route('reviews.decide', [$submission, 'approved']), ['step_number' => 1])->assertForbidden();
+
+        $ownSubmission = app(SubmissionWorkflow::class)->create($reviewer, $type->id, ['purpose' => 'Pengajuan verifikator'], true);
+        $this->actingAs($reviewer)->get(route('reviews.show', $ownSubmission))->assertOk()->assertSee('Mode baca saja')->assertDontSee('Setujui tahap');
+        $this->actingAs($reviewer)->post(route('reviews.decide', [$ownSubmission, 'approved']), ['step_number' => 1])->assertForbidden();
+        $this->assertSame('submitted', $ownSubmission->fresh()->status);
     }
 }
