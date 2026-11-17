@@ -37,6 +37,25 @@ Jika file `.env` belum ada, salin `.env.example` menjadi `.env`, lalu atur `APP_
 
 Migration aplikasi bersifat aditif. Gunakan `php artisan migrate` untuk menerapkannya. Jangan gunakan `migrate:fresh` pada database yang berisi data. Seeder demo bersifat idempoten dan tidak membuat ulang contoh pengajuan jika sudah ada pengajuan.
 
+## Konfigurasi Railway
+
+Tambahkan variabel berikut pada Variables service Railway, lalu deploy ulang:
+
+| Variabel | Nilai |
+| --- | --- |
+| `APP_ENV` | `production` |
+| `APP_DEBUG` | `false` |
+| `APP_URL` | `https://paperless-campus-production.up.railway.app` |
+| `TRUSTED_PROXIES` | `*` |
+| `SESSION_DRIVER` | `database` |
+| `SESSION_SECURE_COOKIE` | `true` |
+| `SESSION_SAME_SITE` | `lax` |
+| `SESSION_DOMAIN` | Biarkan tidak disetel (cookie khusus host) |
+
+Railway menyediakan `RAILWAY_ENVIRONMENT_NAME`; aplikasi hanya menerima `TRUSTED_PROXIES=*` pada environment production Railway. Di Laragon, proxy tepercaya tidak diaktifkan otomatis dan HTTP localhost tetap didukung. Jangan mengubah atau membuat ulang `APP_KEY` saat memperbaiki HTTPS.
+
+Pastikan layanan memakai database production yang persisten dan jalankan migration normal (`php artisan migrate`) agar tabel `sessions` tersedia. Jangan gunakan SQLite pada filesystem deployment yang tidak persisten untuk data akun/sesi production. Jika aplikasi memakai beberapa replica, semuanya harus memakai database dan `APP_KEY` yang sama.
+
 ## Akun demo lokal
 
 | Peran | Email | Kata sandi |

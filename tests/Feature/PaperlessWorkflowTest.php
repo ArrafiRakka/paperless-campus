@@ -37,6 +37,35 @@ class PaperlessWorkflowTest extends TestCase
         $this->post('/login', ['email' => $user->email, 'password' => 'wrong'])->assertSessionHasErrors('email');
     }
 
+    public function test_railway_https_proxy_generates_secure_login_urls_redirects_and_session_cookie(): void
+    {
+        $host = 'paperless-campus-production.up.railway.app';
+        $server = [
+            'REMOTE_ADDR' => '127.0.0.1',
+            'HTTP_HOST' => $host,
+            'SERVER_NAME' => $host,
+            'SERVER_PORT' => '80',
+            'HTTPS' => 'off',
+            'HTTP_X_FORWARDED_HOST' => $host,
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP_X_FORWARDED_PORT' => '443',
+        ];
+        config(['session.secure' => true, 'session.domain' => null, 'session.same_site' => 'lax']);
+
+        $page = $this->withServerVariables($server)->get('/login')->assertOk()
+            ->assertSee('action="https://'.$host.'/login"', false)
+            ->assertSee('https://'.$host.'/paperless.css', false);
+        $sessionCookie = collect($page->headers->getCookies())->first(fn ($cookie) => $cookie->getName() === config('session.cookie'));
+        $this->assertNotNull($sessionCookie);
+        $this->assertTrue($sessionCookie->isSecure());
+        $this->assertSame('lax', $sessionCookie->getSameSite());
+        $this->assertNull($sessionCookie->getDomain());
+
+        $this->withServerVariables($server)
+            ->post('/login', ['email' => 'pengaju@paperless.test', 'password' => 'DemoPaperless!2026'])
+            ->assertRedirect('https://'.$host.'/dashboard');
+    }
+
     public function test_profile_can_be_updated_and_password_requires_current_password(): void
     {
         $user = User::where('email', 'pengaju@paperless.test')->firstOrFail();

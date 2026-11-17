@@ -7,6 +7,7 @@ use App\Policies\SubmissionPolicy;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View as ViewContract;
 use Illuminate\Support\Carbon;
@@ -26,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $appUrl = (string) config('app.url');
+        if (app()->environment('production') && parse_url($appUrl, PHP_URL_SCHEME) === 'https') {
+            URL::forceRootUrl(rtrim($appUrl, '/'));
+            URL::forceScheme('https');
+        }
+
         Carbon::setLocale('id');
         Gate::policy(Submission::class, SubmissionPolicy::class);
         Paginator::useBootstrapFive();
