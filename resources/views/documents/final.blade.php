@@ -1,0 +1,1 @@
+<!doctype html><html lang="id"><meta charset="utf-8"><title>Dokumen internal</title><body><h1>{{ $submission->documentType->name }}</h1><p>Nomor {{ $number }}</p><p>{{ $submission->user->name }}</p><p>Dokumen internal prototipe. Bukan tanda tangan elektronik tersertifikasi.</p></body></html>

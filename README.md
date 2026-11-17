@@ -1,59 +1,66 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PaperLess Campus
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi web administrasi digital untuk satu unit layanan kampus. Cakupan: Surat Keterangan Aktif Kuliah, Surat Izin Kegiatan, dan Peminjaman Fasilitas. UI berbahasa Indonesia; autentikasi, role, pengajuan, approval, timeline, arsip, konfigurasi, serta metrik transaksi memakai Laravel dan database.
 
-## About Laravel
+## Status teknis
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Framework terpasang: Laravel 13.42.0; PHP CLI lokal: 8.3.30. Versi Laravel dipertahankan sesuai project.
+- Antarmuka memakai Blade SSR dengan CSS/JavaScript vanilla dan file statis ringan di `public/`.
+- `.env` lokal saat diaudit memakai SQLite. Migration baru aditif; database tidak di-reset.
+- Dokumen final dibuat satu kali sebagai PDF satu halaman oleh generator internal tanpa dependency eksternal. Dokumen tersebut untuk simulasi administrasi dan bukan tanda tangan elektronik tersertifikasi.
+- Nilai CO₂e adalah estimasi counterfactual/proyeksi, bukan pembacaan listrik server atau hasil audit.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Menjalankan dengan Laragon (Windows)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Jalankan Apache dan MySQL hanya bila memilih MySQL. Pastikan PHP Laragon 8.3+ aktif di PATH.
+2. Dari terminal project: `composer install` (vendor saat ini sudah ada). Salin `.env.example` ke `.env` bila belum mempunyai `.env`; jangan menimpa file `.env` yang berisi konfigurasi lokal.
+3. Untuk SQLite: pastikan `DB_CONNECTION=sqlite` dan `database/database.sqlite` ada. Project lokal saat ini sudah memakai file tersebut.
+4. Untuk MySQL Laragon: buat database `paperless_campus` lewat HeidiSQL/phpMyAdmin, lalu isi `DB_CONNECTION=mysql`, host/port/database/user/password sesuai konfigurasi lokal Anda.
+5. Jalankan migration tanpa reset: `php artisan migrate`.
+6. Isi data demo lokal (idempoten): `php artisan db:seed`. Seed akun demo dan submission hanya bila tabel submission belum berisi data.
+7. Buka Laragon Auto Virtual Host jika domain lokal sudah dibuat, atau jalankan `php artisan serve` lalu buka `http://127.0.0.1:8000`.
 
-## Learning Laravel
+Jika Anda mengubah `APP_KEY`/konfigurasi, gunakan `php artisan config:clear`. Jangan bagikan `.env` atau gunakan password demo di produksi.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Akun demo lokal
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Seeder membuat:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+| Peran | Email | Kata sandi |
+|---|---|---|
+| Pengaju | `pengaju@paperless.test` | `DemoPaperless!2026` |
+| Verifikator | `verifikator@paperless.test` | `DemoPaperless!2026` |
+| Admin unit | `admin@paperless.test` | `DemoPaperless!2026` |
 
-## Agentic Development
+Akun ini hanya untuk demo lokal. Tidak ada pemilih role mandiri di layar login; role berasal dari rekaman user.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Cara demo singkat
 
-```bash
-composer require laravel/boost --dev
+1. Login Pengaju, buat pengajuan salah satu dari tiga layanan, simpan draf atau kirim.
+2. Logout, login Verifikator, cari antrean dan setujui tahap atau minta revisi dengan catatan.
+3. Login kembali Pengaju untuk melihat timeline/revisi. Untuk menguji dua tahap, ubah konfigurasi layanan event sebagai Admin menjadi 2 tahap.
+4. Setelah semua tahap disetujui, cek Arsip Digital dan unduh keluaran internal privat. PDF privat simulasi, bukan dokumen bertanda tangan tersertifikasi.
+5. Lihat Dashboard Dampak dan Metodologi; transaksi selesai dipisahkan dari panel proyeksi 3.000 pengajuan/tahun.
 
-php artisan boost:install
+## Perintah QA
+
+```powershell
+php artisan test
+php artisan route:list
+php artisan migrate:status
+php artisan view:cache
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Vite build memerlukan `npm install` lebih dahulu. Halaman Laravel memakai aset statis yang sudah disediakan di `public/paperless.css` dan `public/paperless.js`, jadi dapat dibuka tanpa build. Jangan jalankan `migrate:fresh` pada database berisi data.
 
-## Contributing
+Queue lokal dapat memakai `QUEUE_CONNECTION=sync`; jika menggunakan queue database, jalankan `php artisan queue:work`. Aplikasi saat ini menyelesaikan workflow sinkron dan tidak membutuhkan worker.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Dokumentasi teknis
 
-## Code of Conduct
+- [Arsitektur](docs/ARCHITECTURE.md)
+- [Metodologi CO₂e](docs/CO2_METHOD.md)
+- [Bukti GSE](docs/GSE_EVIDENCE.md)
+- [Testing](docs/TESTING.md)
+- [Rencana pengukuran performa](docs/PERFORMANCE_TEST_PLAN.md)
+- [Alignment laporan](docs/REPORT_ALIGNMENT.md)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-"# paperless-campus" 
